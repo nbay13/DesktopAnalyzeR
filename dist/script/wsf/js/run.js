@@ -115,5 +115,4 @@ batFile.Close();
 
 //' continue running script after launching R
 var bWaitOnReturn  = false;
-
 oShell.Run(batFilePath, intWindowStyle, bWaitOnReturn);
