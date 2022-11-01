@@ -14,15 +14,16 @@ server = function(input, output, session) {
     if(input$checkContam == TRUE) flags <- c("terminate", "relabel")
     else flags <- c("terminate", "relabel", "remove")
     temp <- readRDS("anno.rds")
-    filt_temp <- ucla.btc.moR::filter.annotation(temp, ids = as.numeric(input$checkProj), sample_types = as.character(input$checkSampleType), 
+
+    filt_temp <- ucla.btc.moR::filter.annotation(temp, ids = input$checkProj, sample_types = input$checkSampleType, 
       paired = as.logical(input$checkPaired), unique = !as.logical(input$checkUnique), replicate = as.logical(input$checkReplicate),
       cross.project = as.logical(input$checkCross), swap_pt = as.logical(input$checkSwap), 
-      dx = as.character(input$checkDx), grade = as.numeric(input$checkGrade), 
-      idh = as.character(input$checkIDH), h3 = as.character(input$checkH3),
+      dx = input$checkDx, grade = input$checkGrade, 
+      idh = input$checkIDH, h3 = input$checkH3, 
       flags = flags
-    )[,c("Short.ID", "Sample.Type", "Line", "Dx", "WHO.Grade", "IDH.status", "H3.status", "Recurrence.Status", "Age.Surgery", "Ethnicity", "Sex")]
+    )[,c("Short.ID", "Proj.ID", "Sample.Type", "Line", "Dx", "WHO.Grade", "IDH.status", "H3.status", "Recurrence.Status", "Age.Surgery", "Ethnicity", "Sex")]
   })
-  output$anno <- DT::renderDataTable({DT::datatable(annotation(), extensions = "Buttons", options = list(dom = "Blfrtip",buttons = c("tsv", "csv", "excel"), text = "Export"), rownames = F)}, server = F)
+  output$anno <- DT::renderDataTable({DT::datatable(annotation(), extensions = "Buttons", options = list(dom = "Blfrtip",buttons = c("csv", "excel"), text = "Export"), rownames = F)}, server = F)
   
   txt <- reactive({
     paste(input$checkDatasets, collapse = "\n")
