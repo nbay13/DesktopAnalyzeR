@@ -1,0 +1,13 @@
+Dataset	Full.Name	Description
+counts	Expression Counts	Raw gene expression counts from STAR+RSEM (only recommended for DESeq)
+cpm	Expression CPM	log2 Counts per million normalize from raw counts using DESeq2 (depth normalized)
+tpm	Expression TPM	log2 Transcripts per million from STAR+RSEM (depth + gene length normalized)
+ssgsea	ssGSEA Scores	Single sample geneset enrichment scores calculated using the ssGSEA algorithm (Barbie et al. 2009)
+ciber	UCLA CIBERSORTx	Composition of UCLA cellular states inferred using CIBERSORTx
+ciber2	Neftel CIBERSORTx	Composition of Neftel et al. 2019 cellular states using CIBERSORTx
+subtype	TCGA GBM Subtypes	Subtype scoring and calls based on TCGA GBM subtypes (Wang et al. 2017)
+subtype2	TCGA LGG Subtypes	Subtype scoring and calls based on TCGA LGG subtypes (Brat et al. 2015)
+state	Neftel Cellular States	Cellular state scoring and calls based on Suva lab cellular states (Neftel et al. 2019)
+align	Alignment QC	Summary statistics describing the quality of RNA sequencing and alignment
+model	Model System QC	Correlations measuring the gene expression similarity of matched patients and models
+contam	Contamination QC	Geneset scoring converted into metrics of normal cell contamination

@@ -2,7 +2,7 @@
 #' It is the same as example_02 in the RStudio Shiny Tutorial
 
 library(shiny)
-
+library(shinyFiles)
 tweaks <- 
   list(tags$head(tags$style(HTML("
                                  .multicol { 
@@ -47,7 +47,7 @@ tweaks <-
                                  ))
 
   controls <-
-  list(h4("UCLA BTC Datasets"), 
+  list(h4("UCLA Datasets"), 
        tags$div(align = 'left', 
                 class = 'multicol', 
                 checkboxGroupInput(inputId  = 'checkDatasets',
@@ -55,11 +55,12 @@ tweaks <-
                                    choices = list("Exp Counts" = "counts",
                                              "Exp CPM" = "cpm",
                                              "Exp TPM" = "tpm", 
-                                             "ssGSEA" = "ssgsea", 
-                                             "CSx UCLA" = "ciber",
-                                             "CSx Neftel" = "ciber2",
+                                             "ssGSEA" = "ssgsea",
+                                             "Neftel States" = "state", 
                                              "GBM Subtypes" = "subtype",
                                              "LGG Subtypes" = "subtype2",
+                                             "CSx UCLA" = "ciber",
+                                             "CSx Neftel" = "ciber2",
                                              "Align QC" = "align",
                                              "Model QC" = "model",
                                              "Contam QC" = "contam"),
@@ -67,7 +68,7 @@ tweaks <-
                                    inline   = FALSE)))
 
   controls2 <-
-  list(h4("Nathanson Lab Project IDs"), 
+  list(h4("Project ID"), 
        tags$div(align = 'left', 
                 class = 'multicolsmall', 
                 checkboxGroupInput(inputId  = 'checkProj',
@@ -82,7 +83,7 @@ tweaks <-
                                    inline   = FALSE)))
 
   controls3 <-
-  list(h4("Glioma Diagnoses"), 
+  list(h4("Glioma Diagnosis"), 
        tags$div(align = 'left', 
                 class = 'multicolsmall', 
                 checkboxGroupInput(inputId  = 'checkDx',
@@ -120,7 +121,7 @@ tweaks <-
                                    inline   = FALSE)))
 
   controls4 <-
-  list(h4("WHO Grades"), 
+  list(h4("WHO Grade"), 
        tags$div(align = 'left', 
                 class = 'multicolsmaller', 
                 checkboxGroupInput(inputId  = 'checkGrade',
@@ -133,7 +134,7 @@ tweaks <-
                                    inline   = FALSE)))
 
   controls5 <-
-  list(h4("Sample Types"), 
+  list(h4("Sample Type"), 
        tags$div(align = 'left', 
                 class = 'multicolmid', 
                 checkboxGroupInput(inputId  = 'checkSampleType',
@@ -150,11 +151,16 @@ tweaks <-
                                    inline   = FALSE)))
 
   controls6 <-
-  list(h4("Use all features from these datasets"), 
-    tags$div(align = 'left',
-             class = 'multicol',
-             uiOutput('checkbox')
-           ),
+  list(h4("Use all features from these datasets"),
+    tags$head(tags$style("
+      #featBox{
+        margin-bottom: 5px; /*set the margin, so boxes don't overlap*/
+      }
+      #featBox input[type='checkbox']{ /* style for checkboxes */
+        margin-bottom: 0px;
+      }
+  ")),
+    tableOutput('featBox'),
     h4("Type a list of features to include (one per line)"),
     textAreaInput(inputId = "typeFeatures",label = "", height = '150px')
   ) 
@@ -182,117 +188,148 @@ tweaks <-
 #     )
 #   )
 
-ui = navbarPage(title = "UCLA BTC Multi-omics Resource",
-  tabPanel("Datasets", tweaks,
-    sidebarLayout(
-      sidebarPanel(
-        h2("Dataset Selection"),
-        controls,
-        h4("Upload Dataset"),
-        fileInput("checkDataFile", label = NULL, multiple = TRUE),
-        fluidRow(
-          column(4,
-            actionButton("loadDatasets", "Load Datasets", icon("paper-plane"), style="color: #fff; background-color: #337ab7; border-color: #2e6da4"),
+ui = navbarPage(title = "UCLA Brain SPORE | Multi-omics Resource",
+  tabPanel("Data Curator", 
+    tabsetPanel(
+      tabPanel("Datasets", tweaks,
+        sidebarLayout(
+          sidebarPanel(
+            h2("Dataset Selection"),
+            controls,
+            h4("Upload Dataset"),
+            fileInput("checkDataFile", label = NULL, multiple = TRUE),
+            fluidRow(
+              column(4,
+                actionButton("loadDatasets", "Load Datasets", icon("paper-plane"), style="color: #fff; background-color: #337ab7; border-color: #2e6da4"),
+              ),
+              column(4,
+                textOutput("dPrint"),
+              ),
+              column(4,
+                textOutput("dError"),
+              ),
+            ),
           ),
-          column(4,
-            textOutput("dPrint"),
-          ),
-          column(4,
-            textOutput("dError"),
-          ),
-        ),
-      ),
-      mainPanel(
-        tags$div(#sprintf("Global Variable Value: %s", GLOBAL_VAR)),
-        h3("Datasets Preview"),
-        tags$head(tags$style("#dError{color: red;
-                                       font-size: 15px;
-                                       font-style: bold;
-                                     }"
+          mainPanel(
+            tags$div(#sprintf("Global Variable Value: %s", GLOBAL_VAR)),
+            h3("Datasets Preview"),
+            tags$head(tags$style("#dError{color: red;
+                                           font-size: 15px;
+                                           font-style: bold;
+                                         }"
 
-          )),
-        verbatimTextOutput("datasets")
+              )),
+            verbatimTextOutput("datasets"),
+            uiOutput("previewData")
+            )
+          )
+        )
+      ),
+      tabPanel("Samples", tweaks, 
+        sidebarLayout(
+          sidebarPanel(
+            h2("Sample Selection"),
+            br(),
+            controls2,
+            checkboxInput("checkCross", label = "Include cross-project samples?", value = TRUE),
+            br(),
+            controls4,
+            controls3,
+            controls3_idh, controls3_h3,
+            controls5,
+            h4("Other Filters"),
+            checkboxInput("checkPaired", label = "Only matched samples?", value = FALSE),
+            checkboxInput("checkReplicate", label = "Allow replicates?", value = FALSE),
+            checkboxInput("checkUnique", label = "Allow multi-passage xenografts in the same line?", value = FALSE),
+            br(),
+            h4("Danger Zone"),
+            checkboxInput("checkContam", label = "Include patient samples w/ normal contamination?", value = FALSE),
+            checkboxInput("checkSwap", label = "Use Bulk Patient if Purified Patient is missing?", value = FALSE),
+            br(),
+            h4("Type a list of samples to include (one per line)"),
+            textAreaInput(inputId = "typeSamples",label = "", height = '100px'),
+            h4("Upload Sample List as tab-seperated txt file"),
+            fileInput("checkSampleList", label = NULL, multiple = TRUE),
+            fluidRow(
+              column(5,
+                actionButton("loadMetadata", "Load Metadata Table", icon("paper-plane"), style="color: #fff; background-color: #337ab7; border-color: #2e6da4"),
+              ),
+              column(4,
+                textOutput("mPrint"),
+              ),
+              column(3,
+                textOutput("mError"),
+              ),
+            ),
+          ),
+          mainPanel(
+            tags$div(#sprintf("Global Variable Value: %s", GLOBAL_VAR)),
+              h3("Annotation Table Preview"),
+              br(),
+              DT::dataTableOutput("anno"),
+              tags$head(tags$style("#mError{color: red;
+                                           font-size: 15px;
+                                           font-style: bold;
+                                         }"
+
+              ))
+            )
+          )
+        )    
+      ),
+      tabPanel("Features", tweaks,
+        sidebarLayout(
+          sidebarPanel(
+            h2("Feature Selection"),
+            controls6,
+            h4("Upload Feature List as tab-seperated txt file"),
+            fileInput("checkFeatureList", label = NULL, multiple = TRUE),
+            fluidRow(
+              column(4, 
+                actionButton("loadFeatures", "Load Features", icon("paper-plane"), style="color: #fff; background-color: #337ab7; border-color: #2e6da4")
+              ),
+              column(4,
+                uiOutput('tableButton')
+              ),
+            ),
+            #actionButton("makeTable", "Make Table", icon("table"), style = "color: #fff; background-color: #03ac13; border-color: #2e6da4")
+          ),
+          mainPanel(
+            tags$div(
+            h3("Features Preview"),
+            DT::dataTableOutput("previewFinal")
+            )
+          )
         )
       )
     )
   ),
-  tabPanel("Samples", tweaks, 
+  tabPanel("Lipid Annotator",
     sidebarLayout(
       sidebarPanel(
-        h2("Sample Selection"),
-        controls2,
-        checkboxInput("checkCross", label = "Include cross-project samples?", value = TRUE),
+        h2("Lipid Species Annotation"),
         br(),
-        controls4,
-        controls3,
-        controls3_idh, controls3_h3,
-        controls5,
-        h4("Other Filters"),
-        checkboxInput("checkPaired", label = "Only matched samples?", value = FALSE),
-        checkboxInput("checkReplicate", label = "Allow replicates?", value = FALSE),
-        checkboxInput("checkUnique", label = "Allow multi-passage xenografts in the same line?", value = FALSE),
-        br(),
-        h4("Danger Zone"),
-        checkboxInput("checkContam", label = "Include patient samples w/ normal contamination?", value = FALSE),
-        checkboxInput("checkSwap", label = "Use Bulk Patient if Purified Patient is missing?", value = FALSE),
-        br(),
-        h4("Type a list of samples to include (one per line)"),
-        textAreaInput(inputId = "typeSamples",label = "", height = '100px'),
-        h4("Upload Sample List as tab-seperated txt file"),
-        fileInput("checkSampleList", label = NULL, multiple = TRUE),
-        actionButton("previewMetadata", "Preview Metadata Table", icon("magnifying-glass")),
-        br(),br(),
-        fluidRow(
-          column(5,
-            actionButton("loadMetadata", "Load Metadata Table", icon("paper-plane"), style="color: #fff; background-color: #337ab7; border-color: #2e6da4"),
-          ),
-          column(4,
-            textOutput("mPrint"),
-          ),
-          column(3,
-            textOutput("mError"),
-          ),
+        h4("Type a list of lipid species to annotate (one per line)"),
+        textAreaInput(inputId = "typeLipids",label = "", height = '100px'),
+        h4("Upload Lipid Species List as tab-seperated txt file"),
+        fileInput("checkLipidList", label = NULL, multiple = FALSE),
+        div(style = "margin-top: -15px"),
+        checkboxInput("lipidHeader", "uploaded file contains column header?", value = TRUE),
+        column(4, 
+          actionButton("loadLipids", "Load Lipids", icon("paper-plane"), style="color: #fff; background-color: #337ab7; border-color: #2e6da4")
         ),
+        column(4, 
+          uiOutput('lipidTableButton')
+        ),
+        br(),br()
       ),
       mainPanel(
-        tags$div(#sprintf("Global Variable Value: %s", GLOBAL_VAR)),
-          h3("Annotation Table Preview"),
-          br(),
-          DT::dataTableOutput("anno"),
-          tags$head(tags$style("#mError{color: red;
-                                       font-size: 15px;
-                                       font-style: bold;
-                                     }"
-
-          ))
-        )
-      )
-    )    
-  ),
-  tabPanel("Features", tweaks,
-    sidebarLayout(
-      sidebarPanel(
-        h2("Feature Selection"),
-        controls6,
-        h4("Upload Feature List as tab-seperated txt file"),
-        fileInput("checkFeatureList", label = NULL, multiple = TRUE),
-        fluidRow(
-          column(4, 
-            actionButton("loadFeatures", "Load Features", icon("paper-plane"), style="color: #fff; background-color: #337ab7; border-color: #2e6da4")
-          ),
-          column(4,
-            uiOutput('tableButton')
-          ),
-        ),
-        #actionButton("makeTable", "Make Table", icon("table"), style = "color: #fff; background-color: #03ac13; border-color: #2e6da4")
-      ),
-      mainPanel(
-        tags$div(
-        h3("Features Preview")
-        #
-        )
+        h3("Lipid Annotation Preview"),
+        br(),
+        DT::dataTableOutput("lipid_anno"),
       )
     )
-  ),
+  )
 )
+
 
