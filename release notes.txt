@@ -1,0 +1,7 @@
+# DesktopAnalyzeR
+## Release Notes
+
+ = v0.91 - Added Lipid Annotation Module
+ 
+ = v0.90 - Initial release with Dataset Curation module
+ 

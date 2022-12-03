@@ -1,6 +1,7 @@
 #' This is an example Shiny application
 #' It is the same as example_02 in the RStudio Shiny Tutorial
 library(shiny)
+
 options(shiny.maxRequestSize=1000*1024^2)
 server = function(input, output, session) {
   # IMPORTANT!
@@ -9,6 +10,9 @@ server = function(input, output, session) {
   session$onSessionEnded(function() {
     stopApp()
   })
+
+  rv <- reactiveValues(tbl = NULL, clear = F)
+
   descriptions <- read.table("descriptions.txt", sep = "\t", header = T, row.names = 1)
   annotation <- eventReactive(input$loadMetadata, {
     if(input$checkContam == TRUE) flags <- c("terminate", "relabel")
@@ -128,15 +132,26 @@ server = function(input, output, session) {
     }
   })
 
+  observeEvent(input$checkLipidList, {
+    rv$clear <- FALSE
+  }, priority = 1000)
+
   lipidAnno <- eventReactive(input$loadLipids, {
-    if(length(input$checkLipidList) > 0){
+    if(!is.null(input$checkLipidList) & !rv$clear){
       file <- input$checkLipidList
-      ext <- tools::file_ext(file$datapath)
+      ext <- tools::file_ext(file$datapath)   
       validate(need(ext %in% c("txt", "tsv"), "Please upload a .txt or .tsv"))
       lipids <- read.table(file$datapath, header = input$lipidHeader, sep = "\t")[,1]
-    } else lipids <- unlist(strsplit(input$typeLipids, "\n"))
-    return(biorunR::annotate.lipid.species(lipids))
+      shinyjs::reset('checkLipidList')
+      rv$clear <- TRUE
+      rv$tbl <- biorunR::annotate.lipid.species(lipids)
+    } else {
+      lipids <- unlist(strsplit(input$typeLipids, "\n"))
+      rv$tbl <- biorunR::annotate.lipid.species(lipids)
+    }
+    return(rv$tbl)
   })
+
   observeEvent(input$loadLipids,{
     if(input$loadLipids){
       output$lipidTableButton <- renderUI({
@@ -155,7 +170,7 @@ server = function(input, output, session) {
       if(tools::file_ext(fileinfo$datapath) == "csv") write.table(lipidAnno(), as.character(fileinfo$datapath), sep = ",", row.names = T, col.names = NA, quote = F)
     }
   })
-  output$lipid_anno <- DT::renderDataTable({DT::datatable(lipidAnno())}, server = F)
+  output$lipid_anno <- DT::renderDataTable({DT::datatable(lipidAnno(), rownames = F)}, server = F)
 }
 
 #output$anno = renderTable({

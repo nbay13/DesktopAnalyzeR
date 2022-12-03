@@ -307,6 +307,7 @@ ui = navbarPage(title = "UCLA Brain SPORE | Multi-omics Resource",
   tabPanel("Lipid Annotator",
     sidebarLayout(
       sidebarPanel(
+        shinyjs::useShinyjs(),
         h2("Lipid Species Annotation"),
         br(),
         h4("Type a list of lipid species to annotate (one per line)"),
